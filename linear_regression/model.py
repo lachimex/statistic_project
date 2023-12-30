@@ -1,7 +1,7 @@
+import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 
 def mean(values):
     mean = 0
@@ -61,13 +61,28 @@ def right_hinge(values):
     return median(upper_values)
 
 
-# Load dataset
-file_path = 'Salary_dataset.csv'
-data = pd.read_csv(file_path)
+# Connect to SQLite database
+db_name = '../f1.db'
+connection = sqlite3.connect(db_name)
 
-# Extract columns for the plot
-x_values = data['YearsExperience']
-y_values = data['Salary']
+# Query the data from the table
+query = 'select ra.name, ra.year, d.forename, d.surname, c.name, re.positionOrder, re.laps, s.status from results re inner join races ra on ra.raceId = re.raceId inner join drivers d on d.driverId = re.driverId inner join constructors c on c.constructorId = re.constructorId inner join status s on s.statusId = re.statusId'
+result = connection.execute(query).fetchall()
+
+# Get column names from the cursor description
+columns = ["race_name", "race_year", "driver_firstname", "driver_lastname", "constructor_name", "driver_final_position", "laps_driven", "ending"]
+
+# Create a DataFrame
+df = pd.DataFrame(result, columns=columns)
+
+# Close the connection
+connection.close()
+
+# Print the DataFrame
+print(df)
+
+x_values = df["laps_driven"].astype(int)
+
 
 print("Mean:\n", round(mean(x_values), 2))
 
@@ -88,14 +103,14 @@ print("Left hinge:\n", round(left_hinge(x_values.tolist()),2))
 # histogram
 plt.hist(x_values, bins=15)
 plt.title("Histogram")
-plt.xlabel("Years Experience")
+plt.xlabel("Laps driven")
 plt.ylabel("Amount")
 plt.show()
 
 # boxplot
 plt.boxplot(x_values)
 plt.title("Boxplot")
-plt.xlabel("Years Experience")
+plt.xlabel("Laps driven")
 plt.show()
 
 # vioplot
